@@ -8,7 +8,7 @@ const path = require('node:path');
 const PORT = parseInt(process.env.PORT || '3939', 10);
 const WALL_PASSWORD = process.env.WALL_PASSWORD || '';
 const DB_PATH = path.join(__dirname, 'wall_data.sqlite');
-const ALLOWED_KEYS = new Set(['node_overrides', 'node_colors', 'panel_styles', 'created_nodes']);
+const KEY_PATTERN = /^[a-z][a-z0-9_]{0,59}$/; // namespaced keys like fortune50_overrides, g20_colors
 const MAX_BODY = 10 * 1024 * 1024; // 10MB
 
 // --- DB setup ---
@@ -127,8 +127,8 @@ const server = http.createServer(async (req, res) => {
 
   const { key, history } = parsed;
 
-  if (!ALLOWED_KEYS.has(key)) {
-    return json(res, 400, { error: `Unknown key "${key}". Allowed: ${[...ALLOWED_KEYS].join(', ')}` });
+  if (!KEY_PATTERN.test(key)) {
+    return json(res, 400, { error: `Invalid key "${key}". Must match ^[a-z][a-z0-9_]{0,59}$` });
   }
 
   // GET /api/wall/:key/history — password required
