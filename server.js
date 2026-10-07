@@ -3,15 +3,24 @@
 const http = require('node:http');
 const { DatabaseSync } = require('node:sqlite');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const PORT = parseInt(process.env.PORT || '3939', 10);
 const WALL_PASSWORD = process.env.WALL_PASSWORD || '';
-const DB_PATH = path.join(__dirname, 'wall_data.sqlite');
+// Where the SQLite file lives. On a host with an ephemeral filesystem — Render
+// without a mounted disk, most container platforms — anything written beside the
+// app is wiped on every deploy and restart, taking the wall settings with it.
+// Point DATA_DIR at a persistent volume (e.g. DATA_DIR=/data with a disk mounted
+// there) and the database survives. Defaults to the app directory so local
+// development needs no configuration.
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const DB_PATH = path.join(DATA_DIR, 'wall_data.sqlite');
 const KEY_PATTERN = /^[a-z][a-z0-9_]{0,59}$/; // namespaced keys like fortune50_overrides, g20_colors
 const MAX_BODY = 10 * 1024 * 1024; // 10MB
 
 // --- DB setup ---
+fs.mkdirSync(DATA_DIR, { recursive: true }); // no-op when it already exists
 const db = new DatabaseSync(DB_PATH);
 
 db.exec(`
@@ -187,5 +196,12 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`Wall server listening on port ${PORT}`);
   console.log(`DB: ${DB_PATH}`);
+  if (!process.env.DATA_DIR) {
+    console.warn(
+      'WARNING: DATA_DIR not set — the database sits beside the app and will be lost ' +
+      'on the next deploy or restart if this filesystem is ephemeral. In production, ' +
+      'set DATA_DIR to a mounted persistent volume.'
+    );
+  }
   if (!WALL_PASSWORD) console.warn('WARNING: WALL_PASSWORD not set — POST endpoints are inaccessible');
 });
