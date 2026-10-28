@@ -12,6 +12,12 @@ not this wall-settings server. Before answering anything about EverGreen:
    "CLAUDE HANDOFF — READ FIRST", "BILLING PROTOCOL v3/v3.1", and the
    new-customer welcome email template.
 
+**Every bill, pay link or past-due email to a customer** uses Virginia's format:
+short, easy to read, the amount in bold, one big green **"Pay $X now"** button
+(bank link first, no fee), a pay-by date, the AutoPay ask, signed Virginia.
+Template: `public/office/rules/pay-link-email-template.html` in
+`aloysiusb/evergreen-driver-app`. Never send a plain-text bill or a bare link.
+
 Before the session ends, copy the status page to today's date, update it, and
 push. Nothing is kept only in a session's memory or scratchpad: scratchpads are
 wiped.
